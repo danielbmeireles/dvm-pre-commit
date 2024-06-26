@@ -1,37 +1,157 @@
-# Terraform examples on Microsoft Azure
+# DevOps Meetup: pre-commit hooks + IaC Static Code Analysis Tools
 
-Terraform is an open-source infrastructure as code software tool that provides a consistent CLI workflow to manage hundreds of cloud services. Terraform codifies cloud APIs into declarative configuration files.
+This document contains instructions on configuring the **pre-commit** framework for this repository, with contain numerous terraform code examples.
 
-Terraform is used to create, manage, and update infrastructure resources such as VMs, storage, containers, and more. Almost any infrastructure type can be represented as a resource in Terraform.
+Also, we will explore two open-sorce, community-driven static code analysis tool for scanning infrastructure as code (IaC) files for misconfigurations called **Checkov** and **Terrascan**.
 
-This repo contains [Terraform](https://www.terraform.io/) code examples on Microsoft Azure.
+This repository is a fork from [alfonsof/terraform-azure-examples](https://github.com/alfonsof/terraform-azure-examples]).
 
-The Github repository
-[https://github.com/alfonsof/terraform-examples-aws](https://github.com/alfonsof/terraform-examples-aws)
-contains the code samples based in the book *[Terraform: Up and Running](http://www.terraformupandrunning.com)* by [Yevgeniy Brikman](http://www.ybrikman.com). But those examples use AWS (Amazon Web Services).
+## First things first!
 
-Terraform also supports other Cloud providers and this Github repository contains the code samples of the book on Microsoft Azure.
+### Clone the repo
 
-## Quick start
+```bash
+$ gh repo clone danielbmeireles/dvm-pre-commit
+```
 
-You must have a [Microsoft Azure](https://azure.microsoft.com/) subscription.
+### Set the default remote repo
 
-The code consists of Terraform examples using HashiCorp Configuration Language (HCL) on Microsoft Azure.
+```bash
+$ gh repo set-default
 
-All the code is in the [code](/code) folder.
+This command sets the default remote repository to use when querying the
+GitHub API for the locally cloned repository.
 
-For instructions on running the code, please consult the README in each folder.
+gh uses the default repository for things like:
 
-This is the list of examples:
+ - viewing and creating pull requests
+ - viewing and creating issues
+ - viewing and creating releases
+ - working with GitHub Actions
+ - adding repository and environment secrets
 
-* [01-hello-world](code/01-hello-world) - Terraform "Hello, World": Example of how to deploy a single server on Microsoft Azure using the shortest script.
-* [02-one-server](code/02-one-server) - Terraform One Server: Example of how deploy a single server on Microsoft Azure.
-* [03-one-webserver](code/03-one-webserver) - Terraform Web Server: Example of how deploy a single web server on Microsoft Azure. The web server returns "Hello, World" for the URL `/` listening on port 8080.
-* [04-one-webserver-with-vars](code/04-one-webserver-with-vars) - Terraform Web Server with vars: Example of how deploy a single web server on Microsoft Azure. The web server returns "Hello, World" for the URL `/` listening on port 8080, which is defined as a variable.
-* [05-cluster-webserver](code/05-cluster-webserver) - Terraform Cluster Web Server: Example of how deploy a cluster of web servers on Microsoft Azure using Azure Virtual Machine Scale Set, as well as a load balancer using Azure Load Balancer. The cluster of web servers returns "Hello, World" for the URL `/`. The load balancer listens on port 80.
-* [06-create-blob-storage](code/06-create-blob-storage) - Terraform Create Blob Storage: Example of how deploy the creation of a Blob Storage container on Microsoft Azure.
-* [07-terraform-state](code/07-terraform-state) - Terraform State: Example of how to store the information about what infrastructure has been created on Microsoft Azure.
+? Which repository should be the default? danielbmeireles/dvm-pre-commit
+✓ Set danielbmeireles/dvm-pre-commit as the default repository for the current directory
+```
 
-## License
+### Inspect the pre-commit config file
 
-This code is released under the MIT License. See LICENSE file.
+```bash
+$ yq .pre-commit-config.yaml
+```
+
+Can you identify the three main sections of the file? How many repos are configured? And how many hooks?
+
+### Install the hooks
+
+```bash
+$ pre-commit install --install-hooks
+```
+
+### Update the hooks
+
+```bash
+$ pre-commit autoupdate
+```
+
+Does any repository was updated?
+
+## Playing with the pre-commit command
+
+### Manually run pre-commit hooks
+
+At any time, you can manually run all pre‑commit hooks in a repository. For example, following some code modifications but prior to committing your changes, you can run the hooks to reveal any identified issues beforehand. Just run the following command:
+
+```bash
+$ pre-commit run
+```
+
+Bear in mind that this checks only for files added with `git add`.
+
+### Running an individual hook by referring its ID
+
+```bash
+$ pre-commit run terraform-fmt
+```
+
+### Check all files in the repo
+
+If you want to check all files in the re­pository, regardless of their state in the Git database, add the `‑‑all‑files` argument:
+
+```bash
+$ pre-commit run --all-files
+```
+
+This is always a good idea after adding a new hook. You can also combine this with the restriction to an individual hook:
+
+```bash
+$ pre-commit run terraform-fmt --all-files
+```
+
+### Skipping a failed hook
+
+```bash
+$ SKIP=checkov git commit ‑m "Add foo"
+```
+
+### Skipping multiple hooks
+
+```bash
+$ SKIP=checkov,terrascan git commit ‑m "Add foo"
+```
+
+### Skipping all hooks
+
+```bash
+$ git commit ‑m "Add foo" ‑‑no‑verify
+```
+
+## Playing with the checkov command
+
+### Select a single file and scan
+
+```bash
+$ checkov -f main.tf
+```
+
+### Select input folder and scan
+
+```bash
+$ checkov -d /user/tf
+```
+
+## Playing with the terrascan command
+
+### Initializing Terrascan
+
+```bash
+$ terrascan init
+```
+
+Note: The init command is implicitly executed if the scan command does not find policies while executing.
+
+### Terrascanning
+
+```bash
+$ terrascan scan
+```
+
+### Terrascanning current directory containing terraform files for AWS Resources
+
+```bash
+$ terrascan scan -t aws
+```
+
+Try to execute the same command but using the `azure` cloud provider.
+
+### Terrascanning for a specific IaC provider
+
+```bash
+$ terrascan scan -i terraform
+```
+
+### Remote terrascanning
+
+```bash
+$ terrascan scan -t azure -r git -u git@github.com:danielbmeireles/dvm-pre-commit.git//code/01-hello-world
+```

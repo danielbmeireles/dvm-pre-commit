@@ -1,0 +1,22 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.6.0
+  hooks:
+  - id: trailing-whitespace
+- repo: https://github.com/gruntwork-io/pre-commit
+  rev: v0.1.23
+  hooks:
+    - id: terraform-fmt
+    - id: terraform-validate
+- repo: https://github.com/bridgecrewio/checkov.git
+  rev: 3.2.144
+  hooks:
+  - id: checkov
+    verbose: true
+    args: [--soft-fail]
+- repo: https://github.com/tenable/terrascan
+  rev: v1.19.1
+  hooks:
+  - id: terraform-pre-commit
+    args: [ '-i terraform -t azure']
+
